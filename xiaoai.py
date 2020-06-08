@@ -4,8 +4,11 @@ import redis
 import random
 import string
 import logging
+import ssl
 
 logging.basicConfig(level=logging.INFO, filename="xiaoai.log")
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 models_path = "C:\\Users\\10148\\Desktop\\models"
 redis_pool = redis.ConnectionPool(host='localhost', max_connections=20)
