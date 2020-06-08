@@ -1,7 +1,7 @@
 # bot.py
 import re
 from aiocqhttp import CQHttp, Event
-from xiaoai.xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException
+from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException
 
 bot = CQHttp()
 
