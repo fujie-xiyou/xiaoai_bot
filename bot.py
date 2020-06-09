@@ -1,7 +1,7 @@
 # bot.py
 import re
 from aiocqhttp import CQHttp, Event
-from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException
+from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException, share
 
 bot = CQHttp()
 
@@ -24,10 +24,16 @@ async def _(event: Event):
         result = await get_ptts_list(qq)
         await bot.send(event, result, at_sender=True)
 
-    r = re.search(r"^删除音色\s*(.+)$", msg)
+    r = re.search(r"^删除(音色)?\s*(.+)$", msg)
     if r:
-        name = r.group(1).strip()
+        name = r.group(2).strip()
         result = await delete(qq, name)
+        await bot.send(event, result, at_sender=True)
+        return
+    r = re.search(r"^分享(音色)?\s*(.+)$", msg)
+    if r:
+        name = r.group(2).strip()
+        result = await share(qq, name)
         await bot.send(event, result, at_sender=True)
         return
     r = re.search(r"^训练\s*(.+)$", msg)

@@ -102,6 +102,35 @@ async def delete(qq, name):
                 return f"删除失败，错误码：{resp.status}"
 
 
+@group_message_async
+async def share(qq, name):
+    headers, models = await _get_headers_and_models_by_qq(qq)
+    share_model = None
+    for model in models:
+        if model["name"] == name:
+            share_model = model
+            break
+    if not share_model:
+        raise MsgException(f"你没有名为 {name} 的音色。")
+    delete_data = {
+        "device_id": ''.join(random.sample(string.ascii_letters + string.digits, 22)),
+        "vendor_id": share_model["vendor_id"],
+        "request_id": "ptts_{}".format(''.join(random.sample(string.ascii_letters + string.digits, 22)))}
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://speech.ai.xiaomi.com/speech/v1.0/ptts/share_link",
+                                headers=headers,
+                                json=delete_data,
+                                timeout=5000) as resp:
+            if resp.status == 200:
+                resp_json = await resp.json(content_type=None)
+                if resp_json["code"] == 200:
+                    return f"分享的音色 {share_model['name']} 链接如下：\n{resp_json['share_link']}"
+                else:
+                    return resp_json['message']
+            else:
+                return f"分享失败，错误码：{resp.status}"
+
+
 async def set_authorization(qq, auth: str):
     try:
         await _get_headers_and_models_by_auth(auth)
@@ -192,7 +221,7 @@ async def _post_record(headers, post_data):
 @group_message_async
 async def start(headers, name):
     json_path = os.path.join(models_path, f"{name}.json")
-    f = open(json_path, "r" ,encoding="gb18030")
+    f = open(json_path, "r", encoding="gb18030")
     try:
         json_str = f.read()
     except UnicodeDecodeError:
