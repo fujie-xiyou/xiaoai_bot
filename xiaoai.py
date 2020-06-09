@@ -1,3 +1,4 @@
+import json
 import os
 import aiohttp
 import redis
@@ -119,7 +120,7 @@ async def set_authorization(qq, auth: str):
 
 @group_message_async
 async def get_models_list():
-    models_dirs = os.listdir(models_path)
+    models_dirs = [m.split(".")[0] for m in os.listdir(models_path) if m.endswith(".json")]
     result = "当前支持训练的模型有："
     result += "，".join(models_dirs)
     logging.debug(result)
@@ -168,84 +169,6 @@ async def verify(qq, name):
     return headers
 
 
-async def _upload_record(headers, name):
-    upload_data = {
-        "audio_data": "",
-        "audio_format": {
-            "codec": "pcm",
-            "rate": 16000,
-            "bits": 16,
-            "channel": 1,
-            "lang": "zh-CN"
-        },
-        "request_id": ""
-    }
-    post_data = {
-        "train_data_url": [
-        ],
-        "device_id": ''.join(random.sample(string.ascii_letters + string.digits, 22)),
-        "audio_format": {
-            "codec": "pcm",
-            "rate": 16000,
-            "bits": 16,
-            "channel": 1,
-            "lang": "zh-CN"
-        },
-        "request_id": ''.join(random.sample(string.ascii_letters + string.digits, 22))
-    }
-    work_path = os.path.join(models_path, name)
-    texts_path = os.path.join(work_path, "texts.txt")
-    try:
-        text = open(texts_path, encoding="gb18030")
-        try:
-            texts = text.readlines()
-        except UnicodeDecodeError:
-            text.close()
-            text = open(texts_path, encoding="utf-8")
-            texts = text.readlines()
-        text.close()
-        texts = [text.strip() for text in texts if text.strip()]
-
-    except FileNotFoundError:
-        raise MsgException("模型异常，未找到 texts.txt")
-    n = len(texts) + 1
-    for i in range(1, n):
-        with open(os.path.join(work_path, "%s.b64" % i), "r") as f:
-            audio_data = f.read()
-            upload_data["audio_data"] = audio_data
-            upload_data["request_id"] = ''.join(random.sample(string.ascii_letters + string.digits, 22))
-            async with aiohttp.ClientSession() as session:
-                async with session.post("https://speech.ai.xiaomi.com/speech/v1.0/ptts/upload",
-                                        json=upload_data,
-                                        headers=headers,
-                                        timeout=5000) as resp:
-                    if resp.status == 200:
-                        resp_json = await resp.json(content_type=None)
-                        if resp_json["code"] == 200:
-                            item = {"url": resp_json["audio_file"], "id": str(i), "text": texts[i - 1]}
-                            post_data["train_data_url"].append(item)
-                        else:
-                            logging.warning(f"第{i}条上传失败，resp: {resp_json}")
-                    else:
-                        logging.warning(f"第{i}条上传失败，status：{resp.status} resp：{await resp.text()}")
-    gender_path = os.path.join(work_path, "gender.txt")
-    try:
-        gender_f = open(gender_path, encoding="gb18030")
-        try:
-            gender = gender_f.readline()
-        except UnicodeDecodeError:
-            gender_f.close()
-            gender_f = open(gender_path, encoding="utf-8")
-            gender = gender_f.readline()
-        gender_f.close()
-        post_data["user_gender"] = gender.strip()
-        post_data["model_name"] = name
-    except FileNotFoundError:
-        raise MsgException("模型异常。未找到 gender.txt")
-
-    return post_data
-
-
 async def _post_record(headers, post_data):
     async with aiohttp.ClientSession() as session:
         async with session.post("https://speech.ai.xiaomi.com/speech/v1.0/ptts/train",
@@ -264,5 +187,9 @@ async def _post_record(headers, post_data):
 
 @group_message_async
 async def start(headers, name):
-    post_data = await _upload_record(headers, name)
+    json_path = os.path.join(models_path, f"{name}.json")
+    f = open(json_path, "r")
+    json_str = f.read()
+    f.close()
+    post_data = json.loads(json_str)
     return await _post_record(headers, post_data)
