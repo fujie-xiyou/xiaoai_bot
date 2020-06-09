@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, filename="xiaoai.log")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-models_path = "C:\\Users\\10148\\Desktop\\models"
+models_path = os.path.join(os.path.expanduser("~"), "Desktop", "models")
 redis_pool = redis.ConnectionPool(host='localhost', max_connections=20)
 
 
@@ -118,9 +118,13 @@ async def set_authorization(qq, auth: str):
         r.close()
 
 
-@group_message_async
-async def get_models_list():
-    models_dirs = [m.split(".")[0] for m in os.listdir(models_path) if m.endswith(".json")]
+def _get_models_list():
+    return [m.split(".")[0] for m in os.listdir(models_path) if m.endswith(".json")]
+
+
+@group_message
+def get_models_list():
+    models_dirs = _get_models_list()
     result = "当前支持训练的模型有："
     result += "，".join(models_dirs)
     logging.debug(result)
@@ -163,7 +167,7 @@ async def verify(qq, name):
         res_str += "音色列表如下：\n"
         res_str += _show_ptts_list(models)
         raise MsgException(res_str)
-    models_dirs = os.listdir(models_path)
+    models_dirs = _get_models_list()
     if name not in models_dirs:
         raise MsgException("没有这个模型，发送模型列表查看支持训练的模型")
     return headers
@@ -188,8 +192,14 @@ async def _post_record(headers, post_data):
 @group_message_async
 async def start(headers, name):
     json_path = os.path.join(models_path, f"{name}.json")
-    f = open(json_path, "r")
-    json_str = f.read()
+    f = open(json_path, "r" ,encoding="gb18030")
+    try:
+        json_str = f.read()
+    except UnicodeDecodeError:
+        f.close()
+        f = open(json_path, "r", encoding="utf-8")
+        json_str = f.read()
+
     f.close()
     post_data = json.loads(json_str)
     return await _post_record(headers, post_data)

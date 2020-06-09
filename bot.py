@@ -17,7 +17,7 @@ async def _(event: Event):
     msg = event.message.strip()
     qq = event.user_id
     if msg == "模型列表":
-        result = await get_models_list()
+        result = get_models_list()
         await bot.send(event, result, at_sender=True)
         return
     if msg == "音色列表" or msg == "我的音色" or msg == "删除音色":
