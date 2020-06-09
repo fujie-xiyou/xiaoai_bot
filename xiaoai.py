@@ -60,7 +60,7 @@ async def _get_headers_and_models_by_auth(auth: str):
                     raise MsgException("授权码已经失效，请重新私聊我发送")
             else:
                 raise MsgException("授权码已经失效，请重新私聊我发送")
-            models = resp_json["models"]["Owner"]
+            models = resp_json["models"].get("Owner", [])
             return headers, models
 
 
