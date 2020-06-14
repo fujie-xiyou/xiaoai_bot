@@ -154,7 +154,7 @@ def _get_models_list():
 @group_message
 def get_models_list():
     models_dirs = _get_models_list()
-    models_dirs = sorted(models_dirs, key=lambda x: os.path.getmtime(os.path.join(models_path, x)), reverse=True)
+    models_dirs = sorted(models_dirs, key=lambda x: os.path.getmtime(os.path.join(models_path, f"{x}.json")), reverse=True)
     result = "当前支持训练的模型有："
     result += "，".join(models_dirs)
     logging.debug(result)
