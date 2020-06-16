@@ -44,7 +44,6 @@ async def _(event: Event):
         except MsgException as e:
             await bot.send(event, str(e.message), at_sender=True)
             return
-        await bot.send(event, "正在提交训练。。。", at_sender=True)
         result = await start(headers, name)
         await bot.send(event, result, at_sender=True)
         return
