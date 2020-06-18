@@ -137,10 +137,11 @@ async def share(qq, name):
 @group_message
 def audition(name):
     r = redis.Redis(connection_pool=redis_pool)
-    share_link = r.hget(name="xiaoai:model:link", key=name)
+    share_link: bytes = r.hget(name="xiaoai:model:link", key=name)
     r.close()
     if share_link:
-        return f"试听 {name}，链接如下\n{share_link}"
+        share_link: str = share_link.decode()
+        return f"试听 {name}，链接如下：\n{share_link}"
     else:
         return f"没有人分享过这个音色。"
 
