@@ -66,7 +66,7 @@ async def _get_headers_and_models_by_auth(auth: str):
 
 async def _get_headers_and_models_by_qq(qq):
     r = redis.Redis(connection_pool=redis_pool)
-    auth = r.get(f"auth:{qq}")
+    auth = r.hget("xiaoai:auth", key=qq)
     r.close()
     if not auth:
         raise MsgException("请先私聊我发送小爱同学授权码(抓包获取)")
@@ -138,7 +138,7 @@ async def set_authorization(qq, auth: str):
         return "授权码无效，请重新发送。"
     r = redis.Redis(connection_pool=redis_pool)
     try:
-        r.set(f"auth:{qq}", auth)
+        r.hset("xiaoai:auth", key=qq, value=auth)
         return f"设置成功，请在群聊中使用训练功能。"
     except Exception as e:
         logging.exception(e)
