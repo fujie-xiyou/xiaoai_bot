@@ -124,6 +124,9 @@ async def share(qq, name):
             if resp.status == 200:
                 resp_json = await resp.json(content_type=None)
                 if resp_json["code"] == 200:
+                    r = redis.Redis(connection_pool=redis_pool)
+                    r.hset(name="xiaoai:model:link", key=name, value=resp_json['share_link'])
+                    r.close()
                     return f"分享的音色 {share_model['name']} 链接如下：\n{resp_json['share_link']}"
                 else:
                     return resp_json['message']
@@ -214,6 +217,7 @@ async def _post_record(headers, post_data, name):
                 if int(resp_json["code"]) == 200:
                     r = redis.Redis(connection_pool=redis_pool)
                     r.hincrby("xiaoai:model", key=name)
+                    r.close()
                     return "提交成功，请进入小爱音色列表查看"
                 else:
                     raise MsgException("提交失败，{} 错误码: {}".format(resp_json["details"], resp_json["code"]))
