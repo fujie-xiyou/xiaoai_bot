@@ -1,7 +1,7 @@
 # bot.py
 import re
 from aiocqhttp import CQHttp, Event
-from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException, share
+from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException, share, audition
 
 bot = CQHttp()
 
@@ -45,6 +45,12 @@ async def _(event: Event):
             await bot.send(event, str(e.message), at_sender=True)
             return
         result = await start(headers, name)
+        await bot.send(event, result, at_sender=True)
+        return
+    r = re.search(r"^试听(音色)?\s*(.+)$", msg)
+    if r:
+        name = r.group(2).strip()
+        result = audition(name)
         await bot.send(event, result, at_sender=True)
         return
 

@@ -134,6 +134,17 @@ async def share(qq, name):
                 return f"分享失败，错误码：{resp.status}"
 
 
+@group_message
+def audition(name):
+    r = redis.Redis(connection_pool=redis_pool)
+    share_link = r.hget(name="xiaoai:model:link", key=name)
+    r.close()
+    if share_link:
+        return f"试听 {name}，链接如下\n{share_link}"
+    else:
+        return f"没有人分享过这个音色。"
+
+
 async def set_authorization(qq, auth: str):
     try:
         await _get_headers_and_models_by_auth(auth)
