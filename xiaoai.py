@@ -141,7 +141,7 @@ def audition(name):
     r.close()
     if share_link:
         share_link: str = share_link.decode()
-        return f"试听 {name}，链接如下：\n{share_link}"
+        return f"试听音色 {name}，链接如下：\n{share_link}"
     else:
         return f"没有人分享过这个音色。"
 
