@@ -203,7 +203,7 @@ async def verify(qq, name):
     return headers
 
 
-async def _post_record(headers, post_data):
+async def _post_record(headers, post_data, name):
     async with aiohttp.ClientSession() as session:
         async with session.post("https://speech.ai.xiaomi.com/speech/v1.0/ptts/train",
                                 json=post_data,
@@ -212,6 +212,8 @@ async def _post_record(headers, post_data):
             if resp.status == 200:
                 resp_json = await resp.json(content_type=None)
                 if int(resp_json["code"]) == 200:
+                    r = redis.Redis(connection_pool=redis_pool)
+                    r.hincrby("xiaoai:model", key=name)
                     return "提交成功，请进入小爱音色列表查看"
                 else:
                     raise MsgException("提交失败，{} 错误码: {}".format(resp_json["details"], resp_json["code"]))
@@ -232,4 +234,4 @@ async def start(headers, name):
 
     f.close()
     post_data = json.loads(json_str)
-    return await _post_record(headers, post_data)
+    return await _post_record(headers, post_data, name)
