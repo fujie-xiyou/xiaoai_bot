@@ -136,7 +136,7 @@ async def share(qq, name):
                                             json=url_data) as url_resp:
                         if url_resp.status == 200 and (await url_resp.json(content_type=None))["code"] == 0:
                             url_resp_json = await url_resp.json(content_type=None)
-                            share_link = url_resp_json["data"]["url"]
+                            share_link = url_resp_json["data"]["link"]['url']
                     r = redis.Redis(connection_pool=redis_pool)
                     r.hset(name="xiaoai:model:link", key=name, value=share_link)
                     r.close()
@@ -189,7 +189,7 @@ def get_models_list():
     r.close()
     shared_models: Set[str] = {m.decode('utf-8') for m in shared_models}
     models_dirs = [f"{m}*" if m in shared_models else m for m in models_dirs]
-    result = "当前支持训练的模型有(标有*的模型支持试听)："
+    result = "当前支持训练的模型有(标有*的模型支持试听)：\n"
     result += "，".join(models_dirs)
     logging.debug(result)
     return result
