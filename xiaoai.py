@@ -1,5 +1,7 @@
 import json
 import os
+from typing import List, Set
+
 import aiohttp
 import redis
 import random
@@ -143,7 +145,7 @@ def audition(name):
         share_link: str = share_link.decode()
         return f"试听音色 {name}，链接如下：\n{share_link}"
     else:
-        return f"没有人分享过这个音色。"
+        return f"还没有人分享过这个音色。"
 
 
 async def set_authorization(qq, auth: str):
@@ -170,7 +172,12 @@ def _get_models_list():
 def get_models_list():
     models_dirs = _get_models_list()
     models_dirs = sorted(models_dirs, key=lambda x: os.path.getmtime(os.path.join(models_path, f"{x}.json")), reverse=True)
-    result = "当前支持训练的模型有："
+    r = redis.Redis(connection_pool=redis_pool)
+    shared_models: List[bytes] = r.hkeys(name="xiaoai:model:link")
+    r.close()
+    shared_models: Set[str] = {m.decode('utf-8') for m in shared_models}
+    models_dirs = [f"{m}*" if m in shared_models else m for m in models_dirs]
+    result = "当前支持训练的模型有(标有*的模型支持试听)："
     result += "，".join(models_dirs)
     logging.debug(result)
     return result
@@ -214,7 +221,7 @@ async def verify(qq, name):
         raise MsgException(res_str)
     models_dirs = _get_models_list()
     if name not in models_dirs:
-        raise MsgException("没有这个模型，发送模型列表查看支持训练的模型")
+        raise MsgException("没有这个模型，发送模型列表查看支持训练的模型。")
     return headers
 
 
@@ -230,7 +237,7 @@ async def _post_record(headers, post_data, name):
                     r = redis.Redis(connection_pool=redis_pool)
                     r.hincrby("xiaoai:model", key=name)
                     r.close()
-                    return "提交成功，请进入小爱音色列表查看"
+                    return "提交成功，发送“音色列表”或者进入小爱音色列表查看状态。"
                 else:
                     raise MsgException("提交失败，{} 错误码: {}".format(resp_json["details"], resp_json["code"]))
             else:
