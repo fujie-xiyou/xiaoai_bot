@@ -126,10 +126,21 @@ async def share(qq, name):
             if resp.status == 200:
                 resp_json = await resp.json(content_type=None)
                 if resp_json["code"] == 200:
+                    share_link = resp_json['share_link']
+                    url_data = {
+                        "apikey": "8cc28b856402442c0c635ec6e90a3182",
+                        "origin_url": share_link,
+                        "group_sid": "az3ccs8d"
+                    }
+                    async with session.post("https://api.xiaomark.com/v1/link/create",
+                                            json=url_data) as url_resp:
+                        if url_resp.status == 200 and (await url_resp.json(content_type=None))["code"] == 0:
+                            url_resp_json = await url_resp.json(content_type=None)
+                            share_link = url_resp_json["data"]["url"]
                     r = redis.Redis(connection_pool=redis_pool)
-                    r.hset(name="xiaoai:model:link", key=name, value=resp_json['share_link'])
+                    r.hset(name="xiaoai:model:link", key=name, value=share_link)
                     r.close()
-                    return f"分享的音色 {share_model['name']} 链接如下：\n{resp_json['share_link']}"
+                    return f"分享的音色 {share_model['name']} 链接如下：\n{share_link}"
                 else:
                     return resp_json['message']
             else:
@@ -171,7 +182,8 @@ def _get_models_list():
 @group_message
 def get_models_list():
     models_dirs = _get_models_list()
-    models_dirs = sorted(models_dirs, key=lambda x: os.path.getmtime(os.path.join(models_path, f"{x}.json")), reverse=True)
+    models_dirs = sorted(models_dirs, key=lambda x: os.path.getmtime(os.path.join(models_path, f"{x}.json")),
+                         reverse=True)
     r = redis.Redis(connection_pool=redis_pool)
     shared_models: List[bytes] = r.hkeys(name="xiaoai:model:link")
     r.close()
