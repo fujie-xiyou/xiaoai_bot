@@ -137,7 +137,7 @@ async def share(qq, name):
                         "url": share_link
                     }
                     async with session.post("http://u.fujie.bid:81/yourls-api.php",
-                                            json=url_data) as url_resp:
+                                            data=url_data) as url_resp:
                         if url_resp.status == 200 and (await url_resp.json(content_type=None))["statusCode"] == 200:
                             url_resp_json = await url_resp.json(content_type=None)
                             share_link = url_resp_json["shorturl"]
