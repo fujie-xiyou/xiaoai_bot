@@ -9,6 +9,8 @@ import string
 import logging
 import ssl
 
+from config import *
+
 logging.basicConfig(level=logging.INFO, filename="xiaoai.log")
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -128,15 +130,17 @@ async def share(qq, name):
                 if resp_json["code"] == 200:
                     share_link = resp_json['share_link']
                     url_data = {
-                        "apikey": "8cc28b856402442c0c635ec6e90a3182",
-                        "origin_url": share_link,
-                        "group_sid": "az3ccs8d"
+                        "username": YOURLS_USERNAME,
+                        "password": YOURLS_PASSWORD,
+                        "action": "shorturl",
+                        "format": "json",
+                        "url": share_link
                     }
-                    async with session.post("https://api.xiaomark.com/v1/link/create",
+                    async with session.post("http://u.fujie.bid:81/yourls-api.php",
                                             json=url_data) as url_resp:
-                        if url_resp.status == 200 and (await url_resp.json(content_type=None))["code"] == 0:
+                        if url_resp.status == 200 and (await url_resp.json(content_type=None))["statusCode"] == 200:
                             url_resp_json = await url_resp.json(content_type=None)
-                            share_link = url_resp_json["data"]["link"]['url']
+                            share_link = url_resp_json["shorturl"]
                     r = redis.Redis(connection_pool=redis_pool)
                     r.hset(name="xiaoai:model:link", key=name, value=share_link)
                     r.close()
