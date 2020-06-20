@@ -82,7 +82,7 @@ async def delete(qq, name):
     headers, models = await _get_headers_and_models_by_qq(qq)
     delete_model = None
     for model in models:
-        if model["name"] == name:
+        if model["name"].lower() == name.lower():
             delete_model = model
             break
     if not delete_model:
@@ -110,8 +110,9 @@ async def delete(qq, name):
 async def share(qq, name):
     headers, models = await _get_headers_and_models_by_qq(qq)
     share_model = None
+    lower_name = name.lower()
     for model in models:
-        if model["name"] == name:
+        if model["name"].lower() == lower_name:
             share_model = model
             break
     if not share_model:
@@ -179,8 +180,9 @@ async def set_authorization(qq, auth: str):
         r.close()
 
 
-def _get_models_list():
-    return [m.split(".")[0] for m in os.listdir(models_path) if m.endswith(".json")]
+def _get_models_list(lower=False):
+    models = [m.split(".")[0] for m in os.listdir(models_path) if m.endswith(".json")]
+    return [m.lower() if lower else m for m in models]
 
 
 @group_message
@@ -235,13 +237,21 @@ async def verify(qq, name):
         res_str += "音色列表如下：\n"
         res_str += _show_ptts_list(models)
         raise MsgException(res_str)
-    models_dirs = _get_models_list()
-    if name not in models_dirs:
+    models = _get_models_list()
+    name_lower = name.lower()
+    has_model = False
+    for m in models:
+        if name_lower == m.lower():
+            name = m
+            has_model = True
+            break
+    if not has_model:
         raise MsgException("没有这个模型，发送模型列表查看支持训练的模型。")
-    return headers
+    return headers, name
 
 
 async def _post_record(headers, post_data, name):
+    post_data["model_name"] = name
     async with aiohttp.ClientSession() as session:
         async with session.post("https://speech.ai.xiaomi.com/speech/v1.0/ptts/train",
                                 json=post_data,

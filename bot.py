@@ -40,7 +40,7 @@ async def _(event: Event):
     if r:
         name = r.group(1)
         try:
-            headers = await verify(qq, name)
+            headers, name = await verify(qq, name)
         except MsgException as e:
             await bot.send(event, str(e.message), at_sender=True)
             return
