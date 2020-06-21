@@ -130,18 +130,19 @@ async def share(qq, name):
                 resp_json = await resp.json(content_type=None)
                 if resp_json["code"] == 200:
                     share_link = resp_json['share_link']
-                    url_data = {
-                        "username": YOURLS_USERNAME,
-                        "password": YOURLS_PASSWORD,
-                        "action": "shorturl",
-                        "format": "json",
-                        "url": share_link
-                    }
-                    async with session.post("http://u.fujie.bid:81/yourls-api.php",
-                                            data=url_data) as url_resp:
-                        if url_resp.status == 200 and (await url_resp.json(content_type=None))["statusCode"] == 200:
-                            url_resp_json = await url_resp.json(content_type=None)
-                            share_link = url_resp_json["shorturl"]
+                    # 短网址动不动就被封气死人
+                    # url_data = {
+                    #     "username": YOURLS_USERNAME,
+                    #     "password": YOURLS_PASSWORD,
+                    #     "action": "shorturl",
+                    #     "format": "json",
+                    #     "url": share_link
+                    # }
+                    # async with session.post("http://u.fujie.bid:81/yourls-api.php",
+                    #                         data=url_data) as url_resp:
+                    #     if url_resp.status == 200 and (await url_resp.json(content_type=None))["statusCode"] == 200:
+                    #         url_resp_json = await url_resp.json(content_type=None)
+                    #         share_link = url_resp_json["shorturl"]
                     r = redis.Redis(connection_pool=redis_pool)
                     r.hset(name="xiaoai:model:link", key=name, value=share_link)
                     r.close()
