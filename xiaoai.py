@@ -272,6 +272,28 @@ async def _post_record(headers, post_data, name):
 
 
 @group_message_async
+async def invite_record(qq):
+    headers, models = await _get_headers_and_models_by_qq(qq)
+    request_id = "ptts_{}".format(''.join(random.sample(string.ascii_letters + string.digits, 22)))
+    device_id = ''.join(random.sample(string.ascii_letters + string.digits, 22))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://speech.ai.xiaomi.com/speech/v1.0/ptts/token"
+                               f"?request_id={request_id}&device_id={device_id}",
+                               headers=headers,
+                               timeout=5) as resp:
+            if resp.status == 200:
+                resp_json = await resp.json(content_type=None)
+                if resp_json['code'] == 200:
+                    invite_code = resp_json['token']
+                    invite_url = f"https://i.ai.mi.com/h5/ai-custom-tts-fe/index.html?inviteCode={invite_code}"
+                    return f"你的邀请录制链接如下：\n{invite_url}"
+                else:
+                    raise MsgException(f'操作失败，原因：{resp_json["details"]} 错误码:{resp_json["code"]}')
+            else:
+                return f"操作失败，http状态码：{resp.status}，resp: {resp.text()}"
+
+
+@group_message_async
 async def start(headers, name):
     json_path = os.path.join(models_path, f"{name}.json")
     f = open(json_path, "r", encoding="gb18030")

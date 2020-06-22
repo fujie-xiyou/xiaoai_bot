@@ -1,7 +1,8 @@
 # bot.py
 import re
 from aiocqhttp import CQHttp, Event
-from xiaoai import set_authorization, get_models_list, delete, start, get_ptts_list, verify, MsgException, share, audition
+from xiaoai import set_authorization, get_models_list, delete, \
+    start, get_ptts_list, verify, MsgException, share, audition, invite_record
 
 bot = CQHttp()
 
@@ -22,6 +23,10 @@ async def _(event: Event):
         return
     if msg == "音色列表" or msg == "我的音色" or msg == "删除音色":
         result = await get_ptts_list(qq)
+        await bot.send(event, result, at_sender=True)
+
+    if msg == "帮录" or msg == "生成帮录链接" or msg == "帮录链接":
+        result = await invite_record(qq)
         await bot.send(event, result, at_sender=True)
 
     r = re.search(r"^删除(音色)?\s*(.+)$", msg)
@@ -53,5 +58,6 @@ async def _(event: Event):
         result = audition(name)
         await bot.send(event, result, at_sender=True)
         return
+
 
 bot.run(host='127.0.0.1', port=8080)
