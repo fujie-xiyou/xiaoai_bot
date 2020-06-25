@@ -2,7 +2,8 @@
 import re
 from aiocqhttp import CQHttp, Event
 from xiaoai import set_authorization, get_models_list, delete, \
-    start, get_ptts_list, verify, MsgException, share, audition, invite_record
+    start, get_ptts_list, verify, MsgException, share, audition, invite_record, \
+    models_ranking
 
 bot = CQHttp()
 
@@ -27,6 +28,10 @@ async def _(event: Event):
 
     if msg == "帮录" or msg == "生成帮录链接" or msg == "帮录链接":
         result = await invite_record(qq)
+        await bot.send(event, result, at_sender=True)
+
+    if msg == "模型排行":
+        result = models_ranking()
         await bot.send(event, result, at_sender=True)
 
     r = re.search(r"^删除(音色)?\s*(.+)$", msg)

@@ -293,6 +293,18 @@ async def invite_record(qq):
                 return f"操作失败，http状态码：{resp.status}，resp: {resp.text()}"
 
 
+@group_message
+def models_ranking():
+    r = redis.Redis(connection_pool=redis_pool)
+    models_count = r.hgetall(name="xiaoai:model").items()
+    r.close()
+    models_count = sorted(models_count, key=lambda o: o[1], reverse=True)
+    result = "模型被训练次数排行如下：\n"
+    for mc in models_count:
+        result += f"{mc[0].decode('utf-8')}({mc[1]})，"
+    return result[:-1]
+
+
 @group_message_async
 async def start(headers, name):
     json_path = os.path.join(models_path, f"{name}.json")
