@@ -54,7 +54,7 @@ async def _(event: Event):
         except MsgException as e:
             await bot.send(event, str(e.message), at_sender=True)
             return
-        result = await start(headers, name)
+        result = await start(headers, name, qq, event.sender['nickname'])
         await bot.send(event, result, at_sender=True)
         return
     r = re.search(r"^试听(音色)?\s*(.+)$", msg)

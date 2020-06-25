@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import List, Set
 
 import aiohttp
@@ -306,7 +307,7 @@ def models_ranking():
 
 
 @group_message_async
-async def start(headers, name):
+async def start(headers, name, qq, nickname):
     json_path = os.path.join(models_path, f"{name}.json")
     f = open(json_path, "r", encoding="gb18030")
     try:
@@ -318,4 +319,13 @@ async def start(headers, name):
 
     f.close()
     post_data = json.loads(json_str)
-    return await _post_record(headers, post_data, name)
+    result = await _post_record(headers, post_data, name)
+    r = redis.Redis(connection_pool=redis_pool)
+    r.lpush("xiaoai:model:log", json.dumps({
+        "qq": qq,
+        "nickname": nickname,
+        "model_name": name,
+        "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    }))
+    r.close()
+    return result
